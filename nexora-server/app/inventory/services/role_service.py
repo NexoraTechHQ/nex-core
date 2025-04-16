@@ -44,12 +44,12 @@ class RoleService:
     @classmethod
     def create(cls, data: RoleCreate, tenant_id: str):
         collection = resolve_collection("roles", tenant_id)
-        return pb.collection(collection).create(data.dict())
+        return pb.collection(collection).create(data.model_dump())
 
     @classmethod
     def update(cls, id: str, data: RoleUpdate, tenant_id: str):
         collection = resolve_collection("roles", tenant_id)
-        return pb.collection(collection).update(id, data.dict(exclude_unset=True))
+        return pb.collection(collection).update(id, data.model_dump(exclude_unset=True))
 
     @classmethod
     def delete(cls, id: str, tenant_id: str):
