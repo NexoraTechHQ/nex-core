@@ -1,0 +1,13 @@
+version: '3.8' # Optional but recommended to specify the Compose file version
+services:
+  pocketbase:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '8090:8090'
+    environment:
+      PRIVATE_POCKETBASE_ADMIN: 'admin@example.com'
+      PRIVATE_POCKETBASE_PASSWORD: 'supersecurepassword'
+    volumes:
+      - ./pb_data:/home/pocketbase/pb_data
