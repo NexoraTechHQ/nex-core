@@ -1,5 +1,4 @@
 from app.core.schemas.role import RoleCreate, RoleUpdate
-from app.inventory.models.role import Role
 from app.core.database.pocketbase_client import pb
 from app.core.database.tenant_manager import resolve_collection
 
