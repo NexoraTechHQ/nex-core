@@ -1,0 +1,7 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+# Byte-compiled / optimized / DLL files
+*.pyc
+*.pyo
+*.pyd
