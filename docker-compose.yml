@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # Main nexora server
+  nexora-server:
+    build:
+      context: ./nexora-server
+      dockerfile: Dockerfile
+    ports:
+      - '8000:8000' # Adjust port as needed
+    volumes:
+      - ./nexora-server:/app
+    depends_on:
+      - pocketbase
+      - minio
+    environment:
+      - DB_HOST=pocketbase
+      - S3_HOST=minio
+    networks:
+      - nexora-network
+
+  # PocketBase database service from tmp-db
+  pocketbase:
+    build:
+      context: ./tmp-db
+      dockerfile: Dockerfile
+    ports:
+      - '8090:8090'
+    environment:
+      PRIVATE_POCKETBASE_ADMIN: 'admin@example.com'
+      PRIVATE_POCKETBASE_PASSWORD: 'supersecurepassword'
+    volumes:
+      - ./tmp-db/pb_data:/home/pocketbase/pb_data
+    networks:
+      - nexora-network
+
+  # MinIO S3 service from tmp-s3
+  minio:
+    image: quay.io/minio/minio
+    container_name: minio-s3
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - ./tmp-s3/data:/data
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    command: server /data --console-address ":9001"
+    networks:
+      - nexora-network
+
+networks:
+  nexora-network:
+    driver: bridge
