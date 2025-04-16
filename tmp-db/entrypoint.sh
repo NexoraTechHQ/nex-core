@@ -18,11 +18,11 @@ sleep 3
 # Stop the temporary PocketBase instance
 echo "Stopping temporary PocketBase instance..."
 kill $PB_PID 2>/dev/null || echo "PocketBase didn't start properly, no process to kill"
-wait $PB_PID 2>/dev/null || true  # Ensure the process is fully terminated
+wait $PB_PID 2>/dev/null || true
 
+# Create admin user if ENV vars are set
 if [ -n "$PRIVATE_POCKETBASE_ADMIN" ] && [ -n "$PRIVATE_POCKETBASE_PASSWORD" ]; then
   echo "Creating admin user..."
-  # Check if 'superuser upsert' is supported (newer versions)
   if ./pocketbase --help | grep -q "superuser"; then
     ./pocketbase superuser upsert "$PRIVATE_POCKETBASE_ADMIN" "$PRIVATE_POCKETBASE_PASSWORD" || echo "Failed to create admin user"
   else
