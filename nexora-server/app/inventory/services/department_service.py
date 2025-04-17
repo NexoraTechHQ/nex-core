@@ -1,33 +1,16 @@
-from app.core.database.pocketbase_client import pb
+import logging
 from app.core.schemas.department import DepartmentCreate, DepartmentUpdate
-from app.inventory.models.department import Department
+from app.core.services.base_service import BaseService
 
+logger = logging.getLogger(__name__)
 
-class DepartmentService:
-    collection = "vms_i61b74n38e_departments"
+class DepartmentService(BaseService[DepartmentCreate]):
+    def __init__(self):
+        super().__init__(
+            collection_name="departments",
+            create_schema=DepartmentCreate,
+            update_schema=DepartmentUpdate
+        )
 
-    @classmethod
-    def list(cls):
-        records = pb.collection(cls.collection).get_full_list()
-        return [Department(r) for r in records]
-
-    @classmethod
-    def get(cls, id: str):
-        record = pb.collection(cls.collection).get_one(id)
-        return Department(record)
-
-    @classmethod
-    def create(cls, data: DepartmentCreate):
-        record = pb.collection(cls.collection).create(data.dict())
-        return Department(record)
-
-    @classmethod
-    def update(cls, id: str, data: DepartmentUpdate):
-        record = pb.collection(cls.collection).update(
-            id, data.dict(exclude_unset=True))
-        return Department(record)
-
-    @classmethod
-    def delete(cls, id: str):
-        pb.collection(cls.collection).delete(id)
-        return {"message": "Deleted"}
+# Create singleton instance
+department_service = DepartmentService()
