@@ -1,62 +1,66 @@
+import logging
 from flask import Blueprint, request, jsonify
 from app.core.schemas.permission import PermissionCreate, PermissionUpdate
-from app.inventory.services.permission_service import PermissionService
-from app.shared.utils.response import sanitize_response, error_response
+from app.inventory.services.permission_service import permission_service
+from app.core.middleware.auth_utils import get_token
+from app.shared.exceptions import handle_exceptions
 
-bp = Blueprint("permissions", __name__,
-               url_prefix="/api/inventory/permissions")
+logger = logging.getLogger(__name__)
 
+bp = Blueprint("permissions", __name__, url_prefix="/api/inventory/permissions")
 
-def get_tenant_id():
-    return request.headers.get("X-Tenant-ID")
-
-
-@bp.get("/")
+@bp.route("/", methods=["GET"])
+@handle_exceptions
+@get_token
 def list_permissions():
-    try:
-        tenant_id = get_tenant_id()
-        permissions = PermissionService.list(request.args.to_dict(), tenant_id)
-        return jsonify(sanitize_response(permissions))
-    except Exception as e:
-        return error_response(f"Failed to fetch permissions: {str(e)}", 400)
+    """List permissions for the authenticated user's tenant with pagination and filtering"""
+    tenant_id = request.tenant_id
+    query_params = request.args.to_dict()
+    logger.debug(f"Listing permissions for tenant {tenant_id} with params: {query_params}")
+    permissions = permission_service.list(query_params, tenant_id)
+    return jsonify(permissions)
 
-
-@bp.get("/<id>")
+@bp.route("/<id>", methods=["GET"])
+@handle_exceptions
+@get_token
 def get_permission(id):
-    try:
-        tenant_id = get_tenant_id()
-        permission = PermissionService.get(id, tenant_id)
-        return jsonify(sanitize_response(permission))
-    except:
-        return error_response("Permission not found", 404)
+    """Get a permission by ID for the authenticated user's tenant"""
+    tenant_id = request.tenant_id
+    query_params = request.args.to_dict()
+    logger.debug(f"Fetching permission {id} for tenant {tenant_id} with params: {query_params}")
+    permission = permission_service.get(id, tenant_id, query_params)
+    return jsonify(permission)
 
-
-@bp.post("/")
+@bp.route("/", methods=["POST"])
+@handle_exceptions
+@get_token
 def create_permission():
-    try:
-        tenant_id = get_tenant_id()
-        data = PermissionCreate(**request.json)
-        permission = PermissionService.create(data, tenant_id)
-        return jsonify(sanitize_response(permission)), 201
-    except Exception as e:
-        return error_response(f"Failed to create permission: {str(e)}", 400)
+    """Create a new permission for the authenticated user's tenant"""
+    tenant_id = request.tenant_id
+    data = PermissionCreate(**request.get_json())
+    query_params = request.args.to_dict()
+    logger.debug(f"Creating permission for tenant {tenant_id}: {data} with params: {query_params}")
+    permission = permission_service.create(data, tenant_id, query_params)
+    return jsonify(permission), 201
 
-
-@bp.put("/<id>")
+@bp.route("/<id>", methods=["PUT"])
+@handle_exceptions
+@get_token
 def update_permission(id):
-    try:
-        tenant_id = get_tenant_id()
-        data = PermissionUpdate(**request.json)
-        permission = PermissionService.update(id, data, tenant_id)
-        return jsonify(sanitize_response(permission))
-    except Exception as e:
-        return error_response(f"Failed to update permission: {str(e)}", 400)
+    """Update a permission for the authenticated user's tenant"""
+    tenant_id = request.tenant_id
+    data = PermissionUpdate(**request.get_json())
+    query_params = request.args.to_dict()
+    logger.debug(f"Updating permission {id} for tenant {tenant_id}: {data} with params: {query_params}")
+    permission = permission_service.update(id, data, tenant_id, query_params)
+    return jsonify(permission)
 
-
-@bp.delete("/<id>")
+@bp.route("/<id>", methods=["DELETE"])
+@handle_exceptions
+@get_token
 def delete_permission(id):
-    try:
-        tenant_id = get_tenant_id()
-        return jsonify(PermissionService.delete(id, tenant_id))
-    except:
-        return error_response("Permission not found", 404)
+    """Delete a permission for the authenticated user's tenant"""
+    tenant_id = request.tenant_id
+    logger.debug(f"Deleting permission {id} for tenant {tenant_id}")
+    result = permission_service.delete(id, tenant_id)
+    return jsonify(result)

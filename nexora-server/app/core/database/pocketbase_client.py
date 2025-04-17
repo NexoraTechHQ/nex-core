@@ -1,3 +1,4 @@
+#app/core/database/pocketbase_client.py
 import requests
 
 
@@ -12,7 +13,44 @@ class PocketBaseClient:
 
     def collection(self, collection_name):
         return PocketBaseCollection(self.base_url, collection_name, self.headers)
-
+        
+    def auth_with_password(self, username, password):
+        """Authenticate user with email/username and password"""
+        res = requests.post(
+            f"{self.base_url}/api/collections/users/auth-with-password",
+            json={"identity": username, "password": password}
+        )
+        
+        if res.status_code == 200:
+            auth_data = res.json()
+            # Update client headers with the new token
+            self.headers["Authorization"] = f"Bearer {auth_data['token']}"
+            return auth_data
+        return None
+    
+    def refresh_auth(self, token):
+        """Refresh authentication token"""
+        res = requests.post(
+            f"{self.base_url}/api/collections/users/auth-refresh",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        
+        if res.status_code == 200:
+            auth_data = res.json()
+            self.headers["Authorization"] = f"Bearer {auth_data['token']}"
+            return auth_data
+        return None
+        
+    def get_auth_user(self, token):
+        """Get the authenticated user information"""
+        res = requests.get(
+            f"{self.base_url}/api/collections/users/auth-record",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        
+        if res.status_code == 200:
+            return res.json()
+        return None
 
 class PocketBaseCollection:
     def __init__(self, base_url, collection, headers):

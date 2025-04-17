@@ -1,62 +1,67 @@
-# inventory/api/roles.py
+import logging
 from flask import Blueprint, request, jsonify
 from app.core.schemas.role import RoleCreate, RoleUpdate
-from app.inventory.services.role_service import RoleService
-from app.shared.utils.response import sanitize_response, error_response
+from app.inventory.services.role_service import role_service
+from app.core.middleware.auth_utils import get_token
+from app.shared.exceptions import handle_exceptions
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint("roles", __name__, url_prefix="/api/inventory/roles")
 
-
-def get_tenant_id():
-    return request.headers.get("X-Tenant-ID")
-
-
-@bp.get("/")
+@bp.route("/", methods=["GET"])
+@handle_exceptions
+@get_token
 def list_roles():
-    try:
-        tenant_id = get_tenant_id()
-        roles = RoleService.list(request.args.to_dict(), tenant_id)
-        return jsonify(sanitize_response(roles))
-    except Exception as e:
-        return error_response(f"Failed to fetch roles: {str(e)}", 400)
+    """List roles for the authenticated user's tenant with pagination and filtering"""
+    tenant_id = request.tenant_id
+    query_params = request.args.to_dict()
+    logger.debug(f"Received query params for listing roles: {query_params}")
+    logger.debug(f"Listing roles for tenant {tenant_id} with params: {query_params}")
+    roles = role_service.list(query_params, tenant_id)
+    return jsonify(roles)
 
-
-@bp.get("/<id>")
+@bp.route("/<id>", methods=["GET"])
+@handle_exceptions
+@get_token
 def get_role(id):
-    try:
-        tenant_id = get_tenant_id()
-        role = RoleService.get(id, tenant_id)
-        return jsonify(sanitize_response(role))
-    except:
-        return error_response("Role not found", 404)
+    """Get a role by ID for the authenticated user's tenant"""
+    tenant_id = request.tenant_id
+    query_params = request.args.to_dict()
+    logger.debug(f"Fetching role {id} for tenant {tenant_id} with params: {query_params}")
+    role = role_service.get(id, tenant_id, query_params)
+    return jsonify(role)
 
-
-@bp.post("/")
+@bp.route("/", methods=["POST"])
+@handle_exceptions
+@get_token
 def create_role():
-    try:
-        tenant_id = get_tenant_id()
-        data = RoleCreate(**request.json)
-        role = RoleService.create(data, tenant_id)
-        return jsonify(sanitize_response(role)), 201
-    except Exception as e:
-        return error_response(f"Failed to create role: {str(e)}", 400)
+    """Create a new role for the authenticated user's tenant"""
+    tenant_id = request.tenant_id
+    data = RoleCreate(**request.get_json())
+    query_params = request.args.to_dict()
+    logger.debug(f"Creating role for tenant {tenant_id}: {data} with params: {query_params}")
+    role = role_service.create(data, tenant_id, query_params)
+    return jsonify(role), 201
 
-
-@bp.put("/<id>")
+@bp.route("/<id>", methods=["PUT"])
+@handle_exceptions
+@get_token
 def update_role(id):
-    try:
-        tenant_id = get_tenant_id()
-        data = RoleUpdate(**request.json)
-        role = RoleService.update(id, data, tenant_id)
-        return jsonify(sanitize_response(role))
-    except Exception as e:
-        return error_response(f"Failed to update role: {str(e)}", 400)
+    """Update a role for the authenticated user's tenant"""
+    tenant_id = request.tenant_id
+    data = RoleUpdate(**request.get_json())
+    query_params = request.args.to_dict()
+    logger.debug(f"Updating role {id} for tenant {tenant_id}: {data} with params: {query_params}")
+    role = role_service.update(id, data, tenant_id, query_params)
+    return jsonify(role)
 
-
-@bp.delete("/<id>")
+@bp.route("/<id>", methods=["DELETE"])
+@handle_exceptions
+@get_token
 def delete_role(id):
-    try:
-        tenant_id = get_tenant_id()
-        return jsonify(RoleService.delete(id, tenant_id))
-    except:
-        return error_response("Role not found", 404)
+    """Delete a role for the authenticated user's tenant"""
+    tenant_id = request.tenant_id
+    logger.debug(f"Deleting role {id} for tenant {tenant_id}")
+    result = role_service.delete(id, tenant_id)
+    return jsonify(result)
