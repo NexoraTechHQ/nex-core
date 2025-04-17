@@ -1,24 +1,6 @@
 version: '3.8'
 
 services:
-  # Main nexora server
-  nexora-server:
-    build:
-      context: ./nexora-server
-      dockerfile: Dockerfile
-    ports:
-      - '8000:8000' # Adjust port as needed
-    volumes:
-      - ./nexora-server:/app
-    depends_on:
-      - pocketbase
-      - minio
-    environment:
-      - DB_HOST=pocketbase
-      - S3_HOST=minio
-    networks:
-      - nexora-network
-
   # PocketBase database service from tmp-db
   pocketbase:
     build:
