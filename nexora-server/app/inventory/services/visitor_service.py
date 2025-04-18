@@ -24,6 +24,7 @@ class VisitorService(BaseService[VisitorCreate]):
         if data.images:
             image_urls.extend([minio_client.download_and_upload_image(
                 tenant_id, url) for url in data.images])
+        print("data-image_urls", image_urls)
 
         # Update data with processed image URLs
         data_dict = data.model_dump()

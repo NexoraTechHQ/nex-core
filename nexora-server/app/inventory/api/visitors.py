@@ -42,13 +42,23 @@ def get_visitor(id):
 def create_visitor():
     """Create a new visitor with image uploads for the authenticated user's tenant"""
     tenant_id = request.tenant_id
-    # Expect multipart/form-data with 'data' (JSON) and 'images' (files)
-    if not request.form.get("data"):
-        raise BadRequestException("Missing 'data' field in form")
+    content_type = request.content_type or ""
 
+    # Handle JSON or multipart/form-data
     try:
-        data_json = request.form.get("data")
-        data = VisitorCreate.model_validate_json(data_json)
+        if "multipart/form-data" in content_type:
+            if not request.form.get("data"):
+                raise BadRequestException("Missing 'data' field in form")
+            data_json = request.form.get("data")
+            data = VisitorCreate.model_validate_json(data_json)
+        elif "application/json" in content_type:
+            data_dict = request.get_json()
+            if not data_dict:
+                raise BadRequestException("Invalid or empty JSON body")
+            data = VisitorCreate.model_validate(data_dict)
+        else:
+            raise BadRequestException(
+                "Unsupported Content-Type. Use application/json or multipart/form-data")
     except Exception as e:
         logger.error(f"Invalid visitor data: {str(e)}")
         raise BadRequestException(f"Invalid visitor data: {str(e)}")
@@ -66,13 +76,23 @@ def create_visitor():
 def update_visitor(id):
     """Update a visitor with image uploads for the authenticated user's tenant"""
     tenant_id = request.tenant_id
-    # Expect multipart/form-data with 'data' (JSON) and optional 'images' (files)
-    if not request.form.get("data"):
-        raise BadRequestException("Missing 'data' field in form")
+    content_type = request.content_type or ""
 
+    # Handle JSON or multipart/form-data
     try:
-        data_json = request.form.get("data")
-        data = VisitorUpdate.model_validate_json(data_json)
+        if "multipart/form-data" in content_type:
+            if not request.form.get("data"):
+                raise BadRequestException("Missing 'data' field in form")
+            data_json = request.form.get("data")
+            data = VisitorUpdate.model_validate_json(data_json)
+        elif "application/json" in content_type:
+            data_dict = request.get_json()
+            if not data_dict:
+                raise BadRequestException("Invalid or empty JSON body")
+            data = VisitorUpdate.model_validate(data_dict)
+        else:
+            raise BadRequestException(
+                "Unsupported Content-Type. Use application/json or multipart/form-data")
     except Exception as e:
         logger.error(f"Invalid visitor data: {str(e)}")
         raise BadRequestException(f"Invalid visitor data: {str(e)}")
